@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#00ffcc">
     <title>Lab-Value Flash Wheel Ultimate</title>
-    <link rel="manifest" href="manifest.json">
     <style>
         :root {
             /* Dark Mode (Default) */
@@ -1441,13 +1439,6 @@
         });
 
         animate();
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('Service Worker registered', reg))
-                .catch(err => console.log('Service Worker registration error', err));
-        }
     </script>
 </body>
 </html>
