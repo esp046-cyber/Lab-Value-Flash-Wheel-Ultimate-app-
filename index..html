@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lab-Value Flash Wheel Ultimate</title>
+    <style>
+        :root {
+            /* Dark Mode (Default) */
+            --bg-color: #1a1a1a;
+            --ui-bg: rgba(20, 20, 20, 0.85);
+            --text-color: #ffffff;
+            --accent-color: #00ffcc;
+            --accent-hover: #00e6b8;
+            --danger-color: #ff3366;
+            --success-color: #00cc66;
+            --input-bg: rgba(255,255,255,0.15);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        body.light-mode {
+            /* Clinical/Light Mode */
+            --bg-color: #f0f4f8;
+            --ui-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333333;
+            --accent-color: #007bff; /* Clinical Blue */
+            --accent-hover: #0056b3;
+            --danger-color: #d32f2f;
+            --success-color: #2e7d32;
+            --input-bg: rgba(0,0,0,0.08);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Canvas container */
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none;
+        }
+
+        /* UI Overlay */
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 340px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--ui-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+            transition: transform 0.3s ease, background 0.5s ease;
+            scrollbar-width: thin;
+        }
+        
+        /* Header Icons */
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            box-shadow: none;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover {
+            background: var(--input-bg);
+            transform: none;
+        }
+
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-top: 5px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 18px;
+            background-color: #666;
+            border-radius: 20px;
+            margin-left: 10px;
+            transition: background-color 0.2s;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        input[type="checkbox"] {
+            display: none;
+        }
+        input[type="checkbox"]:checked + .toggle-switch {
+            background-color: var(--accent-color);
+        }
+        input[type="checkbox"]:checked + .toggle-switch::after {
+            transform: translateX(18px);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+            height: 4px;
+            background: var(--input-bg);
+            border-radius: 2px;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+        body.light-mode button { color: #fff; }
+        body:not(.light-mode) button { color: #000; }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #666;
+            color: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .secondary-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            box-shadow: none;
+            padding: 8px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+        }
+        .secondary-btn:hover {
+            background-color: var(--input-bg);
+            transform: none;
+        }
+        
+        .preset-btn {
+            flex: 1;
+            font-size: 0.7rem;
+            padding: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            box-shadow: none;
+            border: 1px solid transparent;
+        }
+        .preset-btn.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        #result-display {
+            padding: 15px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 12px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            margin-bottom: 5px;
+            position: relative;
+        }
+        body.light-mode #result-display {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid #ccc;
+        }
+        
+        .result-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        /* Search & Remove Icons inside result */
+        .result-icon {
+            font-size: 1rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            padding: 4px;
+            color: var(--text-color);
+            width: auto;
+            box-shadow: none;
+        }
+        .result-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        #result-sub {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-top: 8px;
+            font-weight: normal;
+            min-height: 1.2em;
+        }
+        body.light-mode #result-sub { color: #555; }
+
+        #reveal-btn {
+            background-color: #ff9800;
+            margin-top: 10px;
+            display: none;
+            color: #fff !important;
+        }
+
+        /* Scoreboard */
+        #score-display {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text-color);
+            background: var(--input-bg);
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: none; /* Hidden until Quiz Mode */
+        }
+
+        /* Quiz Action Buttons */
+        #quiz-actions {
+            display: none;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .quiz-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            color: white !important;
+        }
+        .btn-success { background-color: var(--success-color); }
+        .btn-fail { background-color: var(--danger-color); }
+
+        .highlight {
+            animation: pulse 0.5s ease-in-out;
+            text-shadow: 0 0 15px var(--accent-color);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* History Log */
+        #history-log {
+            margin-top: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+            background: var(--input-bg);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+        .history-item {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            opacity: 0.8;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-label { font-weight: bold; color: var(--accent-color); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #222;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #444;
+            color: #fff;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        body.light-mode .modal-content {
+            background: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0,0,0,0.2);
+            color: inherit;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Color Grid */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .color-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        /* Mobile Prompt */
+        #mobile-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: var(--text-color);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: fadeInOut 2s infinite;
+            display: none;
+        }
+
+        @media (pointer: coarse) {
+            #mobile-hint { display: block; }
+            #ui-panel {
+                top: auto;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 350px;
+            }
+            .hide-mobile { display: none; }
+            #spin-btn { display: none; }
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="mobile-hint">Swipe down to spin</div>
+
+    <div id="ui-panel">
+        <h2>
+            Flash Wheel
+            <div class="header-actions">
+                <div id="score-display">0/0</div>
+                <button class="icon-btn" id="mute-btn" title="Toggle Audio (M)">🔊</button>
+                <button class="icon-btn" id="theme-btn" title="Toggle Theme (T)">🌓</button>
+                <button class="icon-btn" id="fullscreen-btn" title="Fullscreen (F)">⛶</button>
+            </div>
+        </h2>
+        
+        <div id="result-display">
+            <div class="result-title">
+                <span id="result-text">READY</span>
+                <button class="result-icon" id="search-btn" title="Learn More" style="display:none">🔍</button>
+                <button class="result-icon" id="remove-btn" title="Remove from Wheel" style="display:none">🗑️</button>
+            </div>
+            <span id="result-sub">Spin or press Space</span>
+            <button id="reveal-btn">Reveal Answer (R)</button>
+            
+            <!-- Quiz Actions -->
+            <div id="quiz-actions">
+                <button class="quiz-btn btn-success" id="btn-knew">✅ I knew it</button>
+                <button class="quiz-btn btn-fail" id="btn-missed">❌ I missed it</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <button id="spin-btn">SPIN WHEEL (Space)</button>
+        </div>
+
+        <!-- Physics Section -->
+        <div class="control-group hide-mobile">
+            <div class="section-title">Physics</div>
+            <div class="row">
+                <button class="preset-btn" onclick="setPreset('heavy')">Heavy</button>
+                <button class="preset-btn active" onclick="setPreset('std')">Standard</button>
+                <button class="preset-btn" onclick="setPreset('loose')">Loose</button>
+            </div>
+            <div class="row" style="margin-top:5px">
+                <label style="font-size:0.7em; width:50px">Friction</label>
+                <input type="range" id="friction" min="0.90" max="0.995" step="0.001" value="0.985">
+            </div>
+            <div class="row">
+                <label style="font-size:0.7em; width:50px">Force</label>
+                <input type="range" id="force" min="0.1" max="1.5" step="0.1" value="0.8">
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div class="control-group">
+            <div class="section-title">Tools</div>
+            
+            <div class="row">
+                <div style="flex:1">
+                    <label>
+                        Quiz Mode
+                        <label class="toggle-container">
+                            <input type="checkbox" id="quiz-mode">
+                            <div class="toggle-switch"></div>
+                        </label>
+                    </label>
+                </div>
+                <div style="flex:1">
+                    <label>
+                        Speak Result
+                        <label class="toggle-container">
+                            <input type="checkbox" id="speak-toggle">
+                            <div class="toggle-switch"></div>
+                        </label>
+                    </label>
+                </div>
+            </div>
+
+            <label>
+                Auto-Study (5s)
+                <label class="toggle-container">
+                    <input type="checkbox" id="auto-study">
+                    <div class="toggle-switch"></div>
+                </label>
+            </label>
+            
+            <div class="row" style="margin-top: 5px;">
+                <label style="font-size:0.75em; width:60px">Text Size</label>
+                <input type="range" id="font-size-slider" min="30" max="100" value="65" title="Font Size">
+            </div>
+
+            <div class="row" style="margin-top: 8px;">
+                <button class="secondary-btn" id="edit-data-btn" title="Edit Data">📝 Data</button>
+                <button class="secondary-btn" id="share-btn" title="Copy Share Link">🔗 Link</button>
+                <button class="secondary-btn" id="color-btn" title="Customize Colors">🎨 Colors</button>
+                <button class="secondary-btn" id="export-btn" title="Export Deck">⬇️ Save</button>
+                <button class="secondary-btn" onclick="document.getElementById('import-file').click()" title="Import Deck">⬆️ Load</button>
+                <button class="secondary-btn" id="screenshot-btn" title="Screenshot">📷 Snap</button>
+            </div>
+            <input type="file" id="import-file" style="display:none" accept=".json">
+        </div>
+
+        <!-- History Log -->
+        <div class="control-group">
+            <div class="section-title">History</div>
+            <div id="history-log">
+                <div style="text-align:center; color:#888; font-style:italic;">No spins yet</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Data Modal -->
+    <div class="modal-overlay" id="data-modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: var(--accent-color);">Edit Wheel Data</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7;">Enter data as "Label,Value" (one per line).</p>
+            <textarea id="data-input"></textarea>
+            <div class="modal-actions">
+                <button id="save-data-btn">Update Wheel</button>
+                <button class="secondary-btn" id="cancel-data-btn" style="border-color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Modal -->
+    <div class="modal-overlay" id="color-modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: var(--accent-color);">Wheel Colors</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7;">Select 8 colors for the segments.</p>
+            <div class="color-grid" id="color-inputs-container">
+                <!-- Generated via JS -->
+            </div>
+            <div class="modal-actions">
+                <button id="save-color-btn">Apply Colors</button>
+                <button class="secondary-btn" id="cancel-color-btn" style="border-color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Map to fix resolution of "three" in OrbitControls -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Configuration ---
+        let CONFIG = {
+            segments: 8,
+            radius: 5,
+            height: 2,
+            fontSize: 65,
+            bgColors: ['#FF5252', '#E040FB', '#448AFF', '#69F0AE', '#FFD740', '#FF6E40', '#607D8B', '#9C27B0'],
+            data: [
+                { label: 'Hemoglobin', value: '12-16 g/dL' },
+                { label: 'Platelets', value: '150-450k' },
+                { label: 'WBC', value: '4.5-11k' },
+                { label: 'Glucose', value: '70-100 mg/dL' },
+                { label: 'Sodium', value: '135-145 mEq/L' },
+                { label: 'Potassium', value: '3.5-5.0 mEq/L' },
+                { label: 'Creatinine', value: '0.7-1.3 mg/dL' },
+                { label: 'Chloride', value: '98-106 mEq/L' }
+            ]
+        };
+
+        // --- State ---
+        let currentSpeed = 0;
+        let isSpinning = false;
+        let quizMode = false;
+        let autoStudy = false;
+        let autoStudyInterval = null;
+        let currentAnswer = "";
+        let currentLabel = "";
+        let speakResults = false;
+        let isMuted = false;
+        let spinHistory = [];
+        let quizScore = 0;
+        let quizAttempts = 0;
+
+        // --- Global Functions for HTML Access ---
+        window.setPreset = function(type) {
+            const fric = document.getElementById('friction');
+            const force = document.getElementById('force');
+            const btns = document.querySelectorAll('.preset-btn');
+            btns.forEach(b => b.classList.remove('active'));
+
+            if (type === 'heavy') {
+                fric.value = 0.950;
+                force.value = 1.2;
+                btns[0].classList.add('active');
+            } else if (type === 'std') {
+                fric.value = 0.985;
+                force.value = 0.8;
+                btns[1].classList.add('active');
+            } else if (type === 'loose') {
+                fric.value = 0.993;
+                force.value = 0.5;
+                btns[2].classList.add('active');
+            }
+        }
+
+        // --- Initialize from URL ---
+        function initFromURL() {
+            const hash = window.location.hash.substring(1); // remove #
+            if (hash.startsWith('data=')) {
+                try {
+                    const json = decodeURIComponent(escape(atob(hash.split('data=')[1])));
+                    const contents = JSON.parse(json);
+                    
+                    let dataArr = Array.isArray(contents) ? contents : contents.data;
+                    let colorArr = contents.colors || CONFIG.bgColors;
+
+                    if (Array.isArray(dataArr) && dataArr.length >= 2) {
+                        CONFIG.data = dataArr;
+                        CONFIG.segments = dataArr.length;
+                        CONFIG.bgColors = colorArr;
+                        // Handle colors length
+                        while(CONFIG.bgColors.length < CONFIG.segments) {
+                            CONFIG.bgColors = CONFIG.bgColors.concat(CONFIG.bgColors);
+                        }
+                        // Clear URL so refresh doesn't stick to it (optional, but good for UX)
+                        history.replaceState("", document.title, window.location.pathname + window.location.search);
+                        alert("Deck loaded from shared link!");
+                    }
+                } catch (e) {
+                    console.error("Failed to load shared data", e);
+                }
+            }
+        }
+        initFromURL();
+
+
+        // --- Audio System ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTick(velocity) {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.frequency.value = 800 + (velocity * 200); 
+            osc.type = 'triangle';
+            
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.06);
+        }
+
+        function playWinSound() {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                
+                gain.gain.setValueAtTime(0, now + i * 0.1);
+                gain.gain.linearRampToValueAtTime(0.05, now + i * 0.1 + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.5);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + i * 0.1);
+                osc.stop(now + i * 0.1 + 0.6);
+            });
+        }
+
+        function speak(text) {
+            if (!speakResults || isMuted) return;
+            window.speechSynthesis.cancel(); // Stop current
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- Scene Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        scene.fog = new THREE.FogExp2(0x1a1a1a, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 19);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = false;
+        controls.minPolarAngle = Math.PI / 3; 
+        controls.maxPolarAngle = Math.PI / 1.5;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        const spotLight = new THREE.SpotLight(0x00ffcc, 80);
+        spotLight.position.set(0, 15, 5);
+        spotLight.angle = Math.PI / 6;
+        spotLight.penumbra = 0.5;
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+
+        // --- Confetti ---
+        const confettiGeometry = new THREE.BufferGeometry();
+        const confettiCount = 100;
+        const confettiPos = new Float32Array(confettiCount * 3);
+        const confettiVel = [];
+        const confettiColors = [];
+        const colorPalette = [new THREE.Color('#FF5252'), new THREE.Color('#E040FB'), new THREE.Color('#69F0AE')];
+
+        for(let i=0; i<confettiCount; i++) {
+            confettiPos[i*3] = 0; confettiPos[i*3+1] = 0; confettiPos[i*3+2] = 0; 
+            confettiVel.push({ x:0, y:0, z:0 });
+            const col = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            confettiColors.push(col.r, col.g, col.b);
+        }
+        confettiGeometry.setAttribute('position', new THREE.BufferAttribute(confettiPos, 3));
+        confettiGeometry.setAttribute('color', new THREE.Float32BufferAttribute(confettiColors, 3));
+
+        const confettiMaterial = new THREE.PointsMaterial({
+            size: 0.3,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0
+        });
+        const confettiSystem = new THREE.Points(confettiGeometry, confettiMaterial);
+        scene.add(confettiSystem);
+
+        function triggerConfetti() {
+            confettiMaterial.opacity = 1;
+            const positions = confettiSystem.geometry.attributes.position.array;
+            for(let i=0; i<confettiCount; i++) {
+                positions[i*3] = (Math.random() - 0.5) * 5;
+                positions[i*3+1] = CONFIG.radius + 3;
+                positions[i*3+2] = (Math.random() - 0.5) * 2;
+                confettiVel[i] = {
+                    x: (Math.random() - 0.5) * 0.3,
+                    y: (Math.random() * 0.5) + 0.2,
+                    z: (Math.random() - 0.5) * 0.3
+                };
+            }
+            confettiSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function updateConfetti() {
+            if (confettiMaterial.opacity <= 0) return;
+            const positions = confettiSystem.geometry.attributes.position.array;
+            for(let i=0; i<confettiCount; i++) {
+                positions[i*3] += confettiVel[i].x;
+                positions[i*3+1] += confettiVel[i].y;
+                positions[i*3+2] += confettiVel[i].z;
+                confettiVel[i].y -= 0.015;
+            }
+            confettiSystem.geometry.attributes.position.needsUpdate = true;
+            confettiMaterial.opacity -= 0.01; 
+        }
+
+        // --- Logic & UI Functions ---
+
+        // Theme
+        const themeBtn = document.getElementById('theme-btn');
+        let isLightMode = false;
+        function toggleTheme() {
+            isLightMode = !isLightMode;
+            document.body.classList.toggle('light-mode');
+            if (isLightMode) {
+                scene.background = new THREE.Color(0xf0f4f8);
+                scene.fog = new THREE.FogExp2(0xf0f4f8, 0.02);
+                spotLight.color.setHex(0x007bff); 
+                ambientLight.intensity = 0.8; 
+            } else {
+                scene.background = new THREE.Color(0x1a1a1a);
+                scene.fog = new THREE.FogExp2(0x1a1a1a, 0.025);
+                spotLight.color.setHex(0x00ffcc);
+                ambientLight.intensity = 0.4;
+            }
+        }
+        themeBtn.addEventListener('click', toggleTheme);
+
+        // Fullscreen
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        // Mute
+        const muteBtn = document.getElementById('mute-btn');
+        function toggleMute() {
+            isMuted = !isMuted;
+            muteBtn.innerText = isMuted ? "🔇" : "🔊";
+        }
+        muteBtn.addEventListener('click', toggleMute);
+
+
+        // Wheel Build
+        function createAtlas(hideValues = false) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const width = 2048;
+            const height = 1024;
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            const segmentWidth = width / CONFIG.segments;
+
+            CONFIG.data.forEach((item, i) => {
+                const x = i * segmentWidth;
+                ctx.fillStyle = CONFIG.bgColors[i % CONFIG.bgColors.length];
+                ctx.fillRect(x, 0, segmentWidth, height);
+
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = 15;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                const centerX = x + segmentWidth / 2;
+
+                // Use Dynamic Font Size
+                ctx.font = `bold ${CONFIG.fontSize}px "Segoe UI", Arial, sans-serif`;
+                ctx.shadowColor = "rgba(0,0,0,0.4)";
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                const words = item.label.toUpperCase().split(' ');
+                if (words.length > 1 && item.label.length > 10) {
+                     ctx.fillText(words[0], centerX, height / 3.5);
+                     ctx.fillText(words.slice(1).join(' '), centerX, height / 3.5 + (CONFIG.fontSize * 1.1));
+                } else {
+                     ctx.fillText(item.label.toUpperCase(), centerX, height / 3);
+                }
+
+                if (!hideValues) {
+                    ctx.font = '500 45px "Segoe UI", Arial, sans-serif';
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(item.value, centerX, height / 1.7);
+                } else {
+                    ctx.font = 'bold 100px "Segoe UI", Arial, sans-serif';
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.fillText("?", centerX, height / 1.7);
+                }
+            });
+            return canvas;
+        }
+
+        let wheelMesh;
+        function buildWheel() {
+            if (wheelMesh) {
+                scene.remove(wheelMesh);
+                wheelMesh.geometry.dispose();
+                wheelMesh.material.forEach(m => m.dispose());
+            }
+            const atlasCanvas = createAtlas(quizMode);
+            const texture = new THREE.CanvasTexture(atlasCanvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+            const geometry = new THREE.CylinderGeometry(CONFIG.radius, CONFIG.radius, CONFIG.height, 64);
+            const sideMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.4, metalness: 0.2 });
+            const capMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 });
+
+            wheelMesh = new THREE.Mesh(geometry, [sideMaterial, capMaterial, capMaterial]);
+            wheelMesh.rotation.z = Math.PI / 2; 
+            wheelMesh.rotation.x = -Math.PI / 2; 
+            wheelMesh.castShadow = true;
+            wheelMesh.receiveShadow = true;
+            scene.add(wheelMesh);
+        }
+
+        buildWheel();
+
+        // Props
+        const hubGeo = new THREE.CylinderGeometry(1, 1, CONFIG.height + 0.5, 32);
+        const hubMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 });
+        const hub = new THREE.Mesh(hubGeo, hubMat);
+        hub.rotation.z = Math.PI / 2;
+        scene.add(hub);
+
+        const indicatorGroup = new THREE.Group();
+        const indicatorGeo = new THREE.ConeGeometry(0.6, 1.8, 4);
+        const indicatorMat = new THREE.MeshStandardMaterial({ color: 0xff3366, emissive: 0x330011, metalness: 0.5 });
+        const indicator = new THREE.Mesh(indicatorGeo, indicatorMat);
+        indicator.rotation.y = Math.PI / 4; 
+        indicator.rotation.z = Math.PI;
+        indicatorGroup.position.set(0, CONFIG.radius + 1.2, 0);
+        indicatorGroup.add(indicator);
+        scene.add(indicatorGroup);
+
+        const floorGeo = new THREE.PlaneGeometry(100, 100);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 1, metalness: 0 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -CONFIG.radius - 4;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // --- DOM Elements ---
+        const frictionInput = document.getElementById('friction');
+        const forceInput = document.getElementById('force');
+        const fontSizeInput = document.getElementById('font-size-slider');
+        const spinBtn = document.getElementById('spin-btn');
+        const resultDisplay = document.getElementById('result-display');
+        const resultText = document.getElementById('result-text');
+        const resultSub = document.getElementById('result-sub');
+        const revealBtn = document.getElementById('reveal-btn');
+        const quizCheckbox = document.getElementById('quiz-mode');
+        const autoStudyCheckbox = document.getElementById('auto-study');
+        const speakCheckbox = document.getElementById('speak-toggle');
+        const historyLog = document.getElementById('history-log');
+        const scoreDisplay = document.getElementById('score-display');
+        const quizActions = document.getElementById('quiz-actions');
+        const searchBtn = document.getElementById('search-btn');
+        const removeBtn = document.getElementById('remove-btn');
+        const shareBtn = document.getElementById('share-btn');
+
+        // Listeners
+        quizCheckbox.addEventListener('change', (e) => {
+            quizMode = e.target.checked;
+            scoreDisplay.style.display = quizMode ? 'block' : 'none';
+            buildWheel();
+        });
+
+        speakCheckbox.addEventListener('change', (e) => {
+            speakResults = e.target.checked;
+        });
+        
+        fontSizeInput.addEventListener('input', (e) => {
+            CONFIG.fontSize = parseInt(e.target.value);
+            buildWheel();
+        });
+
+        autoStudyCheckbox.addEventListener('change', (e) => {
+            autoStudy = e.target.checked;
+            if (autoStudy) {
+                autoStudyInterval = setInterval(() => {
+                    if (!isSpinning && quizActions.style.display === 'none') startSpin(null);
+                }, 5000);
+                if (!isSpinning) startSpin(null);
+            } else {
+                clearInterval(autoStudyInterval);
+            }
+        });
+
+        // Gamification
+        function updateScore(isCorrect) {
+            quizAttempts++;
+            if (isCorrect) quizScore++;
+            scoreDisplay.innerText = `${quizScore}/${quizAttempts}`;
+            quizActions.style.display = 'none';
+            spinBtn.disabled = false;
+            // If auto study, trigger next
+            if(autoStudy) setTimeout(() => startSpin(null), 1500);
+        }
+        document.getElementById('btn-knew').addEventListener('click', () => updateScore(true));
+        document.getElementById('btn-missed').addEventListener('click', () => updateScore(false));
+
+        // Post-result actions
+        searchBtn.addEventListener('click', () => {
+            window.open('https://www.google.com/search?q=' + encodeURIComponent(currentLabel + " lab value"), '_blank');
+        });
+
+        removeBtn.addEventListener('click', () => {
+            if (CONFIG.data.length <= 2) {
+                alert("Cannot remove items when only 2 remain.");
+                return;
+            }
+            // Find index to remove
+            const index = CONFIG.data.findIndex(d => d.label === currentLabel);
+            if (index > -1) {
+                CONFIG.data.splice(index, 1);
+                CONFIG.segments = CONFIG.data.length;
+                buildWheel();
+                alert(`Removed "${currentLabel}" from the wheel.`);
+                startSpin(null);
+            }
+        });
+        
+        shareBtn.addEventListener('click', () => {
+           const dataStr = JSON.stringify({
+                data: CONFIG.data,
+                colors: CONFIG.bgColors
+            });
+            // Simple encoding
+            const hash = btoa(unescape(encodeURIComponent(dataStr)));
+            const url = window.location.origin + window.location.pathname + '#data=' + hash;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Shareable link copied to clipboard!");
+            });
+        });
+
+        // Swipe Logic
+        let touchStartY = 0;
+        let touchTime = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            touchTime = Date.now();
+        }, { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            if(e.target.id === 'canvas-container') e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('touchend', (e) => {
+            if (isSpinning) return;
+            const touchEndY = e.changedTouches[0].clientY;
+            const dist = touchEndY - touchStartY;
+            const time = Date.now() - touchTime;
+            if (dist > 50 && time < 500) {
+                const speed = Math.min((dist / time) * 2, 1.5); 
+                startSpin(speed);
+            }
+        });
+
+        function getSegmentFromAngle(angle) {
+            const normalizedAngle = angle % (Math.PI * 2);
+            let positiveAngle = normalizedAngle;
+            if (positiveAngle < 0) positiveAngle += Math.PI * 2;
+            const segmentAngle = (Math.PI * 2) / CONFIG.segments;
+            const phaseOffset = Math.PI / 2 + (segmentAngle / 2); 
+            let index = Math.floor(((positiveAngle + phaseOffset) / (Math.PI * 2)) * CONFIG.segments);
+            index = CONFIG.segments - 1 - (index % CONFIG.segments);
+            return CONFIG.data[index];
+        }
+
+        function addToHistory(label, value) {
+            spinHistory.unshift({ label, value });
+            if (spinHistory.length > 10) spinHistory.pop();
+            
+            historyLog.innerHTML = '';
+            spinHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span class="history-label">${item.label}</span> <span>${item.value}</span>`;
+                historyLog.appendChild(div);
+            });
+        }
+
+        function startSpin(forceVal) {
+            if (isSpinning) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const force = forceVal || parseFloat(forceInput.value);
+            currentSpeed = force + (Math.random() * 0.5); 
+            isSpinning = true;
+            spinBtn.disabled = true;
+            revealBtn.style.display = 'none';
+            quizActions.style.display = 'none';
+            searchBtn.style.display = 'none';
+            removeBtn.style.display = 'none';
+            
+            resultText.innerText = "SPINNING...";
+            resultSub.innerText = "";
+            resultDisplay.classList.remove('highlight');
+        }
+
+        function revealAnswer() {
+            if (revealBtn.style.display === 'none') return;
+            resultSub.innerText = currentAnswer;
+            resultSub.style.color = isLightMode ? "#333" : "#fff";
+            playWinSound();
+            triggerConfetti();
+            speak(currentAnswer);
+            revealBtn.style.display = 'none';
+            
+            // Show extra buttons
+            if(quizMode) {
+                quizActions.style.display = 'flex';
+            } else {
+                 // Normal mode, spin button enables when wheel stops, so no need to re-enable here
+            }
+            searchBtn.style.display = 'inline-block';
+            removeBtn.style.display = 'inline-block';
+        }
+
+        spinBtn.addEventListener('click', () => startSpin(null));
+        revealBtn.addEventListener('click', revealAnswer);
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (document.querySelector('.modal-overlay[style*="flex"]')) return; // No shortcuts if modal open
+
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    if(quizActions.style.display === 'none') startSpin(null);
+                    break;
+                case 'Enter':
+                case 'KeyR':
+                    revealAnswer();
+                    break;
+                case 'KeyT':
+                    toggleTheme();
+                    break;
+                case 'KeyM':
+                    toggleMute();
+                    break;
+                case 'KeyF':
+                    toggleFullscreen();
+                    break;
+            }
+        });
+
+        // --- Modals & Data ---
+        const editBtn = document.getElementById('edit-data-btn');
+        const colorBtn = document.getElementById('color-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const importFile = document.getElementById('import-file');
+        
+        const dataModal = document.getElementById('data-modal');
+        const colorModal = document.getElementById('color-modal');
+        const dataInput = document.getElementById('data-input');
+        
+        // Export
+        exportBtn.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                data: CONFIG.data,
+                colors: CONFIG.bgColors
+            }));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "flash_wheel_deck.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+
+        // Import
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const contents = JSON.parse(e.target.result);
+                    // Handle both old format (array) and new format (object with colors)
+                    let dataArr = Array.isArray(contents) ? contents : contents.data;
+                    let colorArr = contents.colors || CONFIG.bgColors;
+
+                    if (Array.isArray(dataArr) && dataArr.length >= 2) {
+                        CONFIG.data = dataArr;
+                        CONFIG.segments = dataArr.length;
+                        CONFIG.bgColors = colorArr;
+                        // Ensure enough colors
+                        while(CONFIG.bgColors.length < CONFIG.segments) {
+                            CONFIG.bgColors = CONFIG.bgColors.concat(CONFIG.bgColors);
+                        }
+                        buildWheel();
+                        alert("Deck loaded successfully!");
+                    } else {
+                        alert("Invalid file format.");
+                    }
+                } catch (err) {
+                    alert("Error reading file.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Edit Data Modal
+        editBtn.addEventListener('click', () => {
+            const text = CONFIG.data.map(d => `${d.label},${d.value}`).join('\n');
+            dataInput.value = text;
+            dataModal.style.display = 'flex';
+            controls.enabled = false;
+        });
+        
+        document.getElementById('cancel-data-btn').addEventListener('click', () => {
+            dataModal.style.display = 'none';
+            controls.enabled = true;
+        });
+
+        document.getElementById('save-data-btn').addEventListener('click', () => {
+            const lines = dataInput.value.split('\n');
+            const newData = [];
+            lines.forEach(line => {
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    newData.push({
+                        label: parts[0].trim(),
+                        value: parts.slice(1).join(',').trim()
+                    });
+                }
+            });
+            if (newData.length >= 2) {
+                CONFIG.data = newData;
+                CONFIG.segments = newData.length;
+                while(CONFIG.bgColors.length < CONFIG.segments) {
+                    CONFIG.bgColors = CONFIG.bgColors.concat(CONFIG.bgColors);
+                }
+                buildWheel();
+                dataModal.style.display = 'none';
+                controls.enabled = true;
+            } else {
+                alert("Enter at least 2 items.");
+            }
+        });
+
+        // Color Modal Logic
+        colorBtn.addEventListener('click', () => {
+            const container = document.getElementById('color-inputs-container');
+            container.innerHTML = '';
+            // Show first 8 or segment count inputs
+            const count = Math.max(8, CONFIG.segments);
+            
+            for(let i=0; i<8; i++) { // Keep it to 8 for UI simplicity, or match segments
+                const wrapper = document.createElement('div');
+                wrapper.className = 'color-input-wrapper';
+                
+                const input = document.createElement('input');
+                input.type = 'color';
+                input.value = CONFIG.bgColors[i % CONFIG.bgColors.length];
+                input.dataset.index = i;
+                
+                wrapper.appendChild(input);
+                container.appendChild(wrapper);
+            }
+            colorModal.style.display = 'flex';
+            controls.enabled = false;
+        });
+
+        document.getElementById('cancel-color-btn').addEventListener('click', () => {
+            colorModal.style.display = 'none';
+            controls.enabled = true;
+        });
+
+        document.getElementById('save-color-btn').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('#color-inputs-container input');
+            const newColors = [];
+            inputs.forEach(inp => newColors.push(inp.value));
+            CONFIG.bgColors = newColors;
+            buildWheel();
+            colorModal.style.display = 'none';
+            controls.enabled = true;
+        });
+
+        // Screenshot
+        document.getElementById('screenshot-btn').addEventListener('click', () => {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'flash-wheel-result.png';
+            link.href = dataURL;
+            link.click();
+        });
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+        let lastTickIndex = -1;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateConfetti();
+
+            if (isSpinning) {
+                wheelMesh.rotation.x += currentSpeed;
+                const friction = parseFloat(frictionInput.value);
+                currentSpeed *= friction;
+
+                const segmentSize = (Math.PI * 2) / CONFIG.segments;
+                const virtualIndex = Math.floor((wheelMesh.rotation.x + (Math.PI/2)) / segmentSize);
+                
+                if (virtualIndex !== lastTickIndex) {
+                    if (currentSpeed > 0.05) playTick(currentSpeed); 
+                    lastTickIndex = virtualIndex;
+                    indicatorGroup.rotation.z = Math.PI + (currentSpeed * 0.5);
+                } else {
+                    indicatorGroup.rotation.z += (Math.PI - indicatorGroup.rotation.z) * 0.2;
+                }
+
+                if (currentSpeed < 0.002) {
+                    currentSpeed = 0;
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    indicatorGroup.rotation.z = Math.PI;
+                    
+                    const result = getSegmentFromAngle(wheelMesh.rotation.x);
+                    currentAnswer = result.value;
+                    currentLabel = result.label;
+                    addToHistory(result.label, result.value);
+                    
+                    resultText.innerText = result.label;
+                    resultDisplay.classList.add('highlight');
+
+                    if (quizMode) {
+                        resultSub.innerText = "???";
+                        resultSub.style.color = "#aaa";
+                        revealBtn.style.display = 'inline-block';
+                        speak("Ready to reveal?");
+                        // Disable actions until reveal
+                        searchBtn.style.display = 'none';
+                        removeBtn.style.display = 'none';
+                    } else {
+                        resultSub.innerText = result.value;
+                        playWinSound();
+                        triggerConfetti();
+                        speak(`${result.label}. ${result.value}`);
+                        // Show actions immediately
+                        searchBtn.style.display = 'inline-block';
+                        removeBtn.style.display = 'inline-block';
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
